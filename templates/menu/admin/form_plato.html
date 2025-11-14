@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titulo }} - Restaurante{% endblock %}
+
+{% block content %}
+<h1><i class="bi bi-egg-fried"></i> {{ titulo }}</h1>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="{{ form.nombre.id_for_label }}" class="form-label">Nombre</label>
+                        {{ form.nombre }}
+                        {% if form.nombre.errors %}
+                            <div class="text-danger">{{ form.nombre.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form.descripcion.id_for_label }}" class="form-label">Descripción</label>
+                        {{ form.descripcion }}
+                        {% if form.descripcion.errors %}
+                            <div class="text-danger">{{ form.descripcion.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.categoria.id_for_label }}" class="form-label">Categoría</label>
+                            {{ form.categoria }}
+                            {% if form.categoria.errors %}
+                                <div class="text-danger">{{ form.categoria.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.precio.id_for_label }}" class="form-label">Precio</label>
+                            {{ form.precio }}
+                            {% if form.precio.errors %}
+                                <div class="text-danger">{{ form.precio.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.tiempo_preparacion.id_for_label }}" class="form-label">Tiempo de Preparación (minutos)</label>
+                            {{ form.tiempo_preparacion }}
+                            {% if form.tiempo_preparacion.errors %}
+                                <div class="text-danger">{{ form.tiempo_preparacion.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.imagen.id_for_label }}" class="form-label">Imagen</label>
+                            {{ form.imagen }}
+                            {% if plato and plato.imagen %}
+                                <div class="mt-2">
+                                    <img src="{{ plato.imagen.url }}" alt="{{ plato.nombre }}" style="max-width: 200px;">
+                                </div>
+                            {% endif %}
+                            {% if form.imagen.errors %}
+                                <div class="text-danger">{{ form.imagen.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="mb-3 form-check">
+                        {{ form.disponible }}
+                        <label class="form-check-label" for="{{ form.disponible.id_for_label }}">
+                            Disponible
+                        </label>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i> Guardar
+                    </button>
+                    <a href="{% url 'menu:lista_platos_admin' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Cancelar
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

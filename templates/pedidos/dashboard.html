@@ -1,0 +1,254 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Restaurante{% endblock %}
+
+{% block content %}
+<h1><i class="bi bi-speedometer2"></i> Panel de Administración</h1>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">Total Pedidos</h5>
+                <h2 class="text-primary">{{ total_pedidos }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">Pedidos Hoy</h5>
+                <h2 class="text-info">{{ pedidos_hoy }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">Ventas Hoy</h5>
+                <h2 class="text-success">${{ ventas_hoy }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">Ventas del Mes</h5>
+                <h2 class="text-warning">${{ ventas_mes }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Generar Reportes</h5>
+            </div>
+            <div class="card-body">
+                <form method="get" class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label for="fecha_inicio" class="form-label">Fecha Inicio</label>
+                        <input type="date" name="fecha_inicio" id="fecha_inicio" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="fecha_fin" class="form-label">Fecha Fin</label>
+                        <input type="date" name="fecha_fin" id="fecha_fin" class="form-control">
+                    </div>
+                    <div class="col-md-6">
+                        <a href="{% url 'pedidos:generar_reporte' 'pdf' %}" class="btn btn-danger" id="btnPdf">
+                            <i class="bi bi-file-pdf"></i> Descargar PDF
+                        </a>
+                        <a href="{% url 'pedidos:generar_reporte' 'excel' %}" class="btn btn-success" id="btnExcel">
+                            <i class="bi bi-file-excel"></i> Descargar Excel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Platos Más Vendidos</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="platosVendidosChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Ingresos Mensuales</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="ingresosMensualesChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Pedidos por Estado</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="pedidosEstadoChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Top 10 Platos Más Vendidos</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Plato</th>
+                                <th>Cantidad Vendida</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for plato in platos_vendidos %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ plato.plato__nombre }}</td>
+                                    <td><strong>{{ plato.total_vendido }}</strong></td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Agregar parámetros de fecha a los enlaces de reportes
+    document.getElementById('btnPdf').addEventListener('click', function(e) {
+        const fechaInicio = document.getElementById('fecha_inicio').value;
+        const fechaFin = document.getElementById('fecha_fin').value;
+        let url = this.href;
+        if (fechaInicio || fechaFin) {
+            url += '?';
+            if (fechaInicio) url += 'fecha_inicio=' + fechaInicio;
+            if (fechaInicio && fechaFin) url += '&';
+            if (fechaFin) url += 'fecha_fin=' + fechaFin;
+            this.href = url;
+        }
+    });
+    
+    document.getElementById('btnExcel').addEventListener('click', function(e) {
+        const fechaInicio = document.getElementById('fecha_inicio').value;
+        const fechaFin = document.getElementById('fecha_fin').value;
+        let url = this.href;
+        if (fechaInicio || fechaFin) {
+            url += '?';
+            if (fechaInicio) url += 'fecha_inicio=' + fechaInicio;
+            if (fechaInicio && fechaFin) url += '&';
+            if (fechaFin) url += 'fecha_fin=' + fechaFin;
+            this.href = url;
+        }
+    });
+</script>
+
+<script>
+    // Gráfico de platos más vendidos
+    const platosData = {
+        labels: [{% for plato in platos_vendidos|slice:":5" %}'{{ plato.plato__nombre }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Cantidad Vendida',
+            data: [{% for plato in platos_vendidos|slice:":5" %}{{ plato.total_vendido }}{% if not forloop.last %},{% endif %}{% endfor %}],
+            backgroundColor: [
+                'rgba(54, 162, 235, 0.8)',
+                'rgba(255, 99, 132, 0.8)',
+                'rgba(255, 206, 86, 0.8)',
+                'rgba(75, 192, 192, 0.8)',
+                'rgba(153, 102, 255, 0.8)',
+            ],
+        }]
+    };
+    
+    new Chart(document.getElementById('platosVendidosChart'), {
+        type: 'bar',
+        data: platosData,
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+    
+    // Gráfico de ingresos mensuales
+    const ingresosData = {
+        labels: [{% for ingreso in ingresos_mensuales %}'{{ ingreso.mes }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Ingresos ($)',
+            data: [{% for ingreso in ingresos_mensuales %}{{ ingreso.total }}{% if not forloop.last %},{% endif %}{% endfor %}],
+            borderColor: 'rgba(75, 192, 192, 1)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            tension: 0.1
+        }]
+    };
+    
+    new Chart(document.getElementById('ingresosMensualesChart'), {
+        type: 'line',
+        data: ingresosData,
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+    
+    // Gráfico de pedidos por estado
+    const estadosData = {
+        labels: [{% for estado in pedidos_por_estado %}'{{ estado.estado }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            data: [{% for estado in pedidos_por_estado %}{{ estado.cantidad }}{% if not forloop.last %},{% endif %}{% endfor %}],
+            backgroundColor: [
+                'rgba(255, 99, 132, 0.8)',
+                'rgba(54, 162, 235, 0.8)',
+                'rgba(255, 206, 86, 0.8)',
+                'rgba(75, 192, 192, 0.8)',
+                'rgba(153, 102, 255, 0.8)',
+            ],
+        }]
+    };
+    
+    new Chart(document.getElementById('pedidosEstadoChart'), {
+        type: 'doughnut',
+        data: estadosData,
+        options: {
+            responsive: true,
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %}
+

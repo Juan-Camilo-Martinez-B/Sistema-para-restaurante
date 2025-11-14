@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Nuevo Movimiento - Inventario{% endblock %}
+
+{% block content %}
+<h1><i class="bi bi-plus-circle"></i> Nuevo Movimiento de Inventario</h1>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="{{ form.ingrediente.id_for_label }}" class="form-label">Ingrediente</label>
+                        {{ form.ingrediente }}
+                        {% if form.ingrediente.errors %}
+                            <div class="text-danger">{{ form.ingrediente.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form.tipo_movimiento.id_for_label }}" class="form-label">Tipo de Movimiento</label>
+                        {{ form.tipo_movimiento }}
+                        {% if form.tipo_movimiento.errors %}
+                            <div class="text-danger">{{ form.tipo_movimiento.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form.cantidad.id_for_label }}" class="form-label">Cantidad</label>
+                        {{ form.cantidad }}
+                        {% if form.cantidad.errors %}
+                            <div class="text-danger">{{ form.cantidad.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form.motivo.id_for_label }}" class="form-label">Motivo</label>
+                        {{ form.motivo }}
+                        {% if form.motivo.errors %}
+                            <div class="text-danger">{{ form.motivo.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i> Registrar Movimiento
+                    </button>
+                    <a href="{% url 'inventario:lista' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Cancelar
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

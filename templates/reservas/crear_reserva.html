@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title %}Crear Reserva - Restaurante{% endblock %}
+
+{% block content %}
+<h1><i class="bi bi-calendar-plus"></i> Crear Reserva</h1>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="{{ form.mesa.id_for_label }}" class="form-label">Mesa</label>
+                        {{ form.mesa }}
+                        {% if form.mesa.errors %}
+                            <div class="text-danger">{{ form.mesa.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.fecha_reserva.id_for_label }}" class="form-label">Fecha</label>
+                            {{ form.fecha_reserva }}
+                            {% if form.fecha_reserva.errors %}
+                                <div class="text-danger">{{ form.fecha_reserva.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.hora_reserva.id_for_label }}" class="form-label">Hora</label>
+                            {{ form.hora_reserva }}
+                            {% if form.hora_reserva.errors %}
+                                <div class="text-danger">{{ form.hora_reserva.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form.numero_personas.id_for_label }}" class="form-label">Número de Personas</label>
+                        {{ form.numero_personas }}
+                        {% if form.numero_personas.errors %}
+                            <div class="text-danger">{{ form.numero_personas.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form.notas.id_for_label }}" class="form-label">Notas (Opcional)</label>
+                        {{ form.notas }}
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i> Crear Reserva
+                    </button>
+                    <a href="{% url 'reservas:mis_reservas' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Cancelar
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Mesas Disponibles</h5>
+            </div>
+            <div class="card-body">
+                {% for mesa in mesas %}
+                    <div class="mb-2">
+                        <strong>Mesa {{ mesa.numero }}</strong><br>
+                        <small class="text-muted">Capacidad: {{ mesa.capacidad }} personas</small>
+                        {% if mesa.ubicacion %}
+                            <br><small class="text-muted">Ubicación: {{ mesa.ubicacion }}</small>
+                        {% endif %}
+                    </div>
+                    {% if not forloop.last %}<hr>{% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

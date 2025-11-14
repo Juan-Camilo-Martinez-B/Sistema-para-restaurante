@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Historial de Pedidos - Restaurante{% endblock %}
+
+{% block content %}
+<h1><i class="bi bi-clock-history"></i> Historial de Pedidos</h1>
+
+{% if pedidos %}
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th># Pedido</th>
+                    <th>Fecha</th>
+                    <th>Estado</th>
+                    <th>Total</th>
+                    <th>Método de Pago</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pedido in pedidos %}
+                    <tr>
+                        <td>#{{ pedido.id }}</td>
+                        <td>{{ pedido.fecha_creacion|date:"d/m/Y H:i" }}</td>
+                        <td>
+                            <span class="badge bg-{% if pedido.estado == 'entregado' %}success{% elif pedido.estado == 'cancelado' %}danger{% elif pedido.estado == 'pendiente' %}warning{% else %}info{% endif %}">
+                                {{ pedido.get_estado_display }}
+                            </span>
+                        </td>
+                        <td><strong>${{ pedido.total }}</strong></td>
+                        <td>{{ pedido.get_metodo_pago_display|default:"-" }}</td>
+                        <td>
+                            <a href="{% url 'pedidos:detalle_pedido' pedido.id %}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i> Ver Detalle
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <div class="alert alert-info text-center">
+        <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+        <h4>No tienes pedidos aún</h4>
+        <p>Realiza tu primer pedido desde el menú.</p>
+        <a href="{% url 'menu:index' %}" class="btn btn-primary">
+            <i class="bi bi-menu-button-wide"></i> Ver Menú
+        </a>
+    </div>
+{% endif %}
+{% endblock %}
+

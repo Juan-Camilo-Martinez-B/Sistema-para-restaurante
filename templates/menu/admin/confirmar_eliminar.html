@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}Confirmar Eliminación - Restaurante{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body text-center">
+                <h2 class="card-title mb-4">¿Eliminar {{ tipo }}?</h2>
+                <p class="mb-4">¿Estás seguro de que deseas eliminar <strong>{{ objeto.nombre }}</strong>?</p>
+                <p class="text-danger"><small>Esta acción no se puede deshacer.</small></p>
+                <form method="post" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Sí, Eliminar
+                    </button>
+                </form>
+                <a href="{% if tipo == 'plato' %}{% url 'menu:lista_platos_admin' %}{% else %}{% url 'menu:lista_ingredientes_admin' %}{% endif %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle"></i> Cancelar
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

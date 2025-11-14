@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}Inventario - Restaurante{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-box-seam"></i> Control de Inventario</h1>
+    <a href="{% url 'inventario:crear_movimiento' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Nuevo Movimiento
+    </a>
+</div>
+
+<div class="mb-3">
+    <form method="get" class="d-flex gap-2">
+        <input type="text" name="busqueda" class="form-control" placeholder="Buscar ingrediente..." value="{{ busqueda }}">
+        <button type="submit" class="btn btn-primary">Buscar</button>
+        <a href="{% url 'inventario:lista' %}" class="btn btn-outline-secondary">Limpiar</a>
+        <div class="form-check form-switch align-self-center ms-2">
+            <input class="form-check-input" type="checkbox" name="bajo_stock" value="1" id="bajoStock" {% if bajo_stock %}checked{% endif %} onchange="this.form.submit()">
+            <label class="form-check-label" for="bajoStock">Solo bajo stock</label>
+        </div>
+    </form>
+</div>
+
+{% if stocks %}
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Ingrediente</th>
+                    <th>Cantidad Actual</th>
+                    <th>Cantidad Mínima</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stock in stocks %}
+                    <tr>
+                        <td>{{ stock.ingrediente.nombre }}</td>
+                        <td><strong>{{ stock.cantidad_actual }} {{ stock.ingrediente.unidad_medida }}</strong></td>
+                        <td>{{ stock.cantidad_minima }} {{ stock.ingrediente.unidad_medida }}</td>
+                        <td>
+                            {% if stock.necesita_reposicion %}
+                                <span class="badge bg-danger">Bajo Stock</span>
+                            {% else %}
+                                <span class="badge bg-success">Disponible</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'inventario:detalle_stock' stock.id %}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i> Ver Detalle
+                            </a>
+                            <a href="{% url 'inventario:editar_stock' stock.id %}" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-pencil"></i> Editar
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <div class="alert alert-info text-center">
+        <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+        <h4>No hay registros de inventario</h4>
+    </div>
+{% endif %}
+{% endblock %}
+
