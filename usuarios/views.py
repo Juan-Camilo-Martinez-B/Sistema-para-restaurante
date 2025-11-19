@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.views.generic import CreateView
@@ -16,21 +16,20 @@ def login_view(request):
     if request.method == 'POST':
         form = LoginForm(request.POST)
         if form.is_valid():
-            username = form.cleaned_data['username']
-            password = form.cleaned_data['password']
-            user = authenticate(request, username=username, password=password)
+            user = form.get_user()
             if user is not None:
                 login(request, user)
                 messages.success(request, f'¡Bienvenido, {user.username}!')
-                # Redirigir según el rol
-                if user.es_administrador():
-                    return redirect('pedidos:dashboard')
+                if user.is_superuser:
+                    return redirect('/admin/')
+                elif user.es_administrador():
+                    return redirect('/gestion/')
                 elif user.es_mesero():
                     return redirect('pedidos:lista_pedidos')
                 else:
                     return redirect('menu:index')
             else:
-                messages.error(request, 'Usuario o contraseña incorrectos')
+                messages.error(request, 'No se pudo iniciar sesión')
     else:
         form = LoginForm()
     
@@ -47,3 +46,11 @@ class RegistroView(CreateView):
     def form_valid(self, form):
         messages.success(self.request, '¡Registro exitoso! Por favor inicia sesión.')
         return super().form_valid(form)
+
+
+@login_required
+def logout_view(request):
+    """Vista de cierre de sesión"""
+    logout(request)
+    messages.success(request, 'Has cerrado sesión exitosamente.')
+    return redirect('usuarios:login')

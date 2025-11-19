@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
+from menu.decorators import admin_role_required
 from django.contrib import messages
 from django.db.models import Sum
 from .models import StockInventario, MovimientoInventario
@@ -9,7 +10,7 @@ from .forms import MovimientoInventarioForm, StockInventarioForm
 from decimal import Decimal
 
 
-@staff_member_required
+@admin_role_required
 def lista_inventario(request):
     """Lista de inventario con stocks"""
     stocks = StockInventario.objects.all().order_by('ingrediente__nombre')
@@ -32,7 +33,7 @@ def lista_inventario(request):
     return render(request, 'inventario/lista.html', context)
 
 
-@staff_member_required
+@admin_role_required
 def detalle_stock(request, stock_id):
     """Detalle de un stock con movimientos"""
     stock = get_object_or_404(StockInventario, id=stock_id)
@@ -45,7 +46,7 @@ def detalle_stock(request, stock_id):
     return render(request, 'inventario/detalle_stock.html', context)
 
 
-@staff_member_required
+@admin_role_required
 def crear_movimiento(request):
     """Crear un movimiento de inventario"""
     if request.method == 'POST':
@@ -82,7 +83,7 @@ def crear_movimiento(request):
     return render(request, 'inventario/crear_movimiento.html', context)
 
 
-@staff_member_required
+@admin_role_required
 def editar_stock(request, stock_id):
     """Editar configuración de stock (cantidad mínima)"""
     stock = get_object_or_404(StockInventario, id=stock_id)

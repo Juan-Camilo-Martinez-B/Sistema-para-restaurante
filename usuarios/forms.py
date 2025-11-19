@@ -7,12 +7,43 @@ class LoginForm(forms.Form):
     """Formulario de inicio de sesión"""
     username = forms.CharField(
         label='Usuario',
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre de usuario'})
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre de usuario'}),
+        error_messages={'required': 'Ingresa tu usuario'}
     )
     password = forms.CharField(
         label='Contraseña',
-        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Contraseña'})
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Contraseña'}),
+        error_messages={'required': 'Ingresa tu contraseña'}
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = None
+
+    def clean(self):
+        cleaned_data = super().clean()
+        username = cleaned_data.get('username')
+        password = cleaned_data.get('password')
+
+        if not username or not password:
+            return cleaned_data
+
+        try:
+            user = Usuario.objects.get(username=username)
+        except Usuario.DoesNotExist:
+            raise forms.ValidationError('No existe un usuario con ese nombre')
+
+        if not user.is_active:
+            raise forms.ValidationError('Tu cuenta está desactivada')
+
+        if not user.check_password(password):
+            raise forms.ValidationError('Contraseña incorrecta')
+
+        self.user = user
+        return cleaned_data
+
+    def get_user(self):
+        return self.user
 
 
 class RegistroForm(UserCreationForm):
@@ -51,7 +82,17 @@ class RegistroForm(UserCreationForm):
         super().__init__(*args, **kwargs)
         self.fields['password1'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Contraseña'})
         self.fields['password2'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Confirmar contraseña'})
+        self.fields['username'].error_messages.update({'required': 'Ingresa un nombre de usuario'})
+        self.fields['email'].error_messages.update({'required': 'Ingresa tu correo electrónico'})
+        self.fields['password1'].error_messages.update({'required': 'Ingresa una contraseña'})
+        self.fields['password2'].error_messages.update({'required': 'Confirma tu contraseña'})
     
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if email and Usuario.objects.filter(email=email).exists():
+            raise forms.ValidationError('Ya existe una cuenta con este correo')
+        return email
+
     def save(self, commit=True):
         user = super().save(commit=False)
         user.email = self.cleaned_data['email']

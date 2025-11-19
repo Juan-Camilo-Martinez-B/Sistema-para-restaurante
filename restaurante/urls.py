@@ -16,11 +16,13 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.views.generic import RedirectView
 from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('gestion/', RedirectView.as_view(pattern_name='pedidos:dashboard', permanent=False)),
     path('', include('menu.urls')),
     path('usuarios/', include('usuarios.urls')),
     path('pedidos/', include('pedidos.urls')),

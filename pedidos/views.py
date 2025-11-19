@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
+from menu.decorators import staff_or_mesero_required, admin_role_required
 from django.contrib import messages
 from django.db.models import Sum, Count, Q
 from django.utils import timezone
@@ -180,7 +181,7 @@ def detalle_pedido(request, pedido_id):
     return render(request, 'pedidos/detalle_pedido.html', context)
 
 
-@staff_member_required
+@staff_or_mesero_required
 def lista_pedidos(request):
     """Lista de pedidos para meseros y administradores"""
     estado = request.GET.get('estado', '')
@@ -196,7 +197,7 @@ def lista_pedidos(request):
     return render(request, 'pedidos/lista_pedidos.html', context)
 
 
-@staff_member_required
+@staff_or_mesero_required
 def actualizar_estado_pedido(request, pedido_id):
     """Actualiza el estado de un pedido"""
     pedido = get_object_or_404(Pedido, id=pedido_id)
@@ -212,7 +213,7 @@ def actualizar_estado_pedido(request, pedido_id):
     return redirect('pedidos:detalle_pedido', pedido_id=pedido_id)
 
 
-@staff_member_required
+@admin_role_required
 def dashboard(request):
     """Panel de administración con estadísticas y gráficos"""
     hoy = timezone.now().date()
@@ -269,7 +270,7 @@ def dashboard(request):
     return render(request, 'pedidos/dashboard.html', context)
 
 
-@staff_member_required
+@admin_role_required
 def generar_reporte(request, formato='pdf'):
     """Genera reportes en PDF o Excel"""
     fecha_inicio = request.GET.get('fecha_inicio')
