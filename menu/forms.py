@@ -1,5 +1,6 @@
 from django import forms
-from django.forms import inlineformset_factory
+from django.forms import inlineformset_factory, BaseInlineFormSet
+from django.core.exceptions import ValidationError
 from .models import Plato, Categoria, Ingrediente, PlatoIngrediente
 
 
@@ -60,11 +61,35 @@ class PlatoIngredienteForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['ingrediente'].queryset = Ingrediente.objects.filter(activo=True).order_by('nombre')
 
+
+class PlatoIngredienteBaseFormSet(BaseInlineFormSet):
+    def clean(self):
+        super().clean()
+        ingredientes_vistos = set()
+        duplicados = []
+        for form in self.forms:
+            if not hasattr(form, 'cleaned_data'):
+                continue
+            cd = form.cleaned_data
+            if cd.get('DELETE'):
+                continue
+            ingrediente = cd.get('ingrediente')
+            if ingrediente is None:
+                continue
+            key = ingrediente.pk
+            if key in ingredientes_vistos:
+                duplicados.append(ingrediente.nombre)
+            else:
+                ingredientes_vistos.add(key)
+        if duplicados:
+            raise ValidationError('No puedes repetir el mismo ingrediente más de una vez.')
+
 PlatoIngredienteFormSet = inlineformset_factory(
     Plato,
     PlatoIngrediente,
     form=PlatoIngredienteForm,
     extra=0,
     can_delete=True,
+    formset=PlatoIngredienteBaseFormSet,
 )
 
