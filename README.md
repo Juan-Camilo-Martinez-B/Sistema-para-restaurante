@@ -21,18 +21,18 @@ Sistema web completo desarrollado con Django para la gestión de pedidos, reserv
 - Pago simulado (efectivo, tarjeta, transferencia)
 - Historial de pedidos para clientes
 - Gestión de estados de pedidos (pendiente, confirmado, en preparación, listo, entregado)
-- Actualización automática de inventario al confirmar pedidos
+- Actualización automática de inventario al confirmar pedidos (descuenta ingredientes según receta)
 
 ### 4. Sistema de Reservas
 - Reserva de mesas con verificación de disponibilidad
 - Gestión de horarios y capacidad de mesas
-- Confirmación automática por correo electrónico
+- Confirmación por correo electrónico (consola en desarrollo, SMTP/SendGrid en producción)
 - Historial de reservas
 
 ### 5. Control de Inventario
 - Gestión de stock de ingredientes
 - Movimientos de inventario (entradas, salidas, ajustes)
-- Alertas de bajo stock
+- Alertas de bajo stock (comparación `cantidad_actual` vs `cantidad_minima`)
 - Historial de movimientos
 
 ### 6. Panel de Administración (Dashboard)
@@ -53,9 +53,9 @@ Sistema web completo desarrollado con Django para la gestión de pedidos, reserv
 - Resumen de ventas y estadísticas
 
 ### 8. Confirmación por Correo
-- Envío automático de correos de confirmación de pedidos
-- Envío automático de correos de confirmación de reservas
-- Configuración para desarrollo (consola) y producción (SMTP)
+- Envío de correos de confirmación de pedidos y reservas
+- Fallback automático a consola si no hay configuración SMTP
+- Soporte de SendGrid mediante `SENDGRID_API_KEY`
 
 ### 9. Interfaz de Usuario
 - Diseño responsivo con Bootstrap 5
@@ -74,47 +74,48 @@ Sistema web completo desarrollado con Django para la gestión de pedidos, reserv
 ## Estructura del Proyecto
 
 ```
-Proyecto-5/
-├── restaurante/          # Configuración del proyecto
-│   ├── settings.py
-│   ├── urls.py
+Sistema-para-restaurante/
+├── restaurante/          # Configuración del proyecto y contexto
+│   ├── settings.py       # Configuración, WhiteNoise, AUTH_USER_MODEL, email
+│   ├── urls.py           # Enrutamiento principal y media/static en DEBUG
+│   ├── context_processors.py  # `carrito_context`
 │   └── wsgi.py
-├── usuarios/             # App de usuarios y autenticación
-│   ├── models.py         # Modelo Usuario con roles
-│   ├── views.py
+├── usuarios/             # Usuarios y autenticación
+│   ├── models.py         # `Usuario` con roles y `RegistroPendiente`
+│   ├── views.py          # Login, registro, verificación correo, reset password
 │   ├── forms.py
 │   └── urls.py
-├── menu/                 # App de menú
-│   ├── models.py        # Plato, Categoria, Ingrediente, PlatoIngrediente
-│   ├── views.py
+├── menu/                 # Menú del restaurante
+│   ├── models.py         # Plato, Categoria, Ingrediente, PlatoIngrediente
+│   ├── views.py          # Index, detalle, CRUD con permisos
+│   ├── decorators.py     # Permisos por rol (admin/mesero)
 │   ├── forms.py
 │   └── urls.py
-├── pedidos/             # App de pedidos
-│   ├── models.py        # Pedido, ItemPedido
-│   ├── views.py
-│   ├── reportes.py      # Generación de reportes
+├── pedidos/              # Pedidos y dashboard
+│   ├── models.py         # Pedido, ItemPedido (IVA 19%)
+│   ├── views.py          # Carrito, checkout, historial, dashboard
+│   ├── reportes.py       # PDF y Excel
 │   └── urls.py
-├── reservas/            # App de reservas
-│   ├── models.py        # Mesa, Reserva
-│   ├── views.py
+├── reservas/             # Reservas de mesas
+│   ├── models.py         # Mesa, Reserva
+│   ├── views.py          # Crear, detalle, cancelar, disponibilidad (AJAX)
 │   ├── forms.py
 │   └── urls.py
-├── inventario/          # App de inventario
-│   ├── models.py        # StockInventario, MovimientoInventario
-│   ├── views.py
+├── inventario/           # Inventario de ingredientes
+│   ├── models.py         # StockInventario, MovimientoInventario
+│   ├── views.py          # Lista, detalle, movimientos, editar stock
 │   ├── forms.py
 │   └── urls.py
-├── templates/           # Templates HTML
+├── templates/            # Templates HTML
 │   ├── base.html
 │   ├── usuarios/
 │   ├── menu/
 │   ├── pedidos/
 │   ├── reservas/
 │   └── inventario/
-├── static/             # Archivos estáticos
-├── media/              # Archivos subidos (imágenes)
 ├── manage.py
-└── requirements.txt
+├── requirements.txt
+└── db.sqlite3 (en desarrollo)
 ```
 
 ## Modelos de Datos
@@ -123,6 +124,7 @@ Proyecto-5/
 - Extiende AbstractUser de Django
 - Campos: rol, teléfono, dirección, fecha_registro
 - Roles: cliente, administrador, mesero
+  - Asignación automática de rol administrador para superusuarios
 
 ### Menu
 - **Categoria**: Categorías de platos
@@ -133,6 +135,7 @@ Proyecto-5/
 ### Pedidos
 - **Pedido**: Pedidos con estados, método de pago, totales
 - **ItemPedido**: Items individuales de un pedido
+  - Cálculo automático de `subtotal` y recálculo de totales del pedido
 
 ### Reservas
 - **Mesa**: Mesas del restaurante con capacidad
@@ -141,6 +144,7 @@ Proyecto-5/
 ### Inventario
 - **StockInventario**: Stock actual de cada ingrediente
 - **MovimientoInventario**: Historial de movimientos (entrada/salida/ajuste)
+  - Se generan salidas automáticamente al confirmar pedidos
 
 ## Instalación
 
@@ -177,7 +181,7 @@ python manage.py migrate
 python manage.py createsuperuser
 ```
 
-6. **Recopilar archivos estáticos**:
+6. **Recopilar archivos estáticos** (necesario en producción):
 ```bash
 python manage.py collectstatic
 ```
@@ -209,27 +213,32 @@ python manage.py runserver
 
 ### Para Administradores
 
-1. **Dashboard**: Ver estadísticas y gráficos
-2. **Gestión de Menú**: 
-   - CRUD de platos: `/menu/admin/platos/`
-   - CRUD de ingredientes: `/menu/admin/ingredientes/`
+1. **Dashboard**: `/pedidos/dashboard/` (acceso rápido: `/gestion/`)
+2. **Gestión de Menú**:
+   - CRUD de platos: `/menu/gestion/platos/`
+   - CRUD de ingredientes: `/menu/gestion/ingredientes/`
 3. **Gestión de Inventario**: `/inventario/`
-4. **Generar Reportes**: 
-   - PDF: `/pedidos/reporte/pdf/?fecha_inicio=2025-01-01&fecha_fin=2025-01-31`
-   - Excel: `/pedidos/reporte/excel/?fecha_inicio=2025-01-01&fecha_fin=2025-01-31`
+4. **Generar Reportes**:
+   - PDF: `/pedidos/reporte/pdf/?fecha_inicio=YYYY-MM-DD&fecha_fin=YYYY-MM-DD`
+   - Excel: `/pedidos/reporte/excel/?fecha_inicio=YYYY-MM-DD&fecha_fin=YYYY-MM-DD`
 5. **Panel Admin Django**: `/admin/`
 
 ## Configuración de Correo
 
-Para desarrollo, los correos se muestran en la consola. Para producción, editar `restaurante/settings.py`:
+En desarrollo, si no se configuran variables de correo, se usa la consola.
+En producción, configurar SMTP o SendGrid mediante variables de entorno.
 
-```python
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'tu_email@gmail.com'
-EMAIL_HOST_PASSWORD = 'tu_contraseña'
+Variables relevantes en `restaurante/settings.py`:
+
+```
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend   # opcional; si no hay EMAIL_HOST, se usa consola
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=<tu_email>
+EMAIL_HOST_PASSWORD=<tu_contraseña>
+DEFAULT_FROM_EMAIL=<remitente@dominio>
+SENDGRID_API_KEY=<SG.xxxxx>  # si se usa SendGrid
 ```
 
 ## Despliegue en Render
@@ -244,14 +253,16 @@ EMAIL_HOST_PASSWORD = 'tu_contraseña'
 
 Define estas variables en Render → Environment:
 
+Obligatorias/útiles:
+
 - `SECRET_KEY`
 - `DEBUG=False`
 - `ALLOWED_HOSTS=<tu-dominio-de-render>`
 - `CSRF_TRUSTED_ORIGINS=https://<tu-dominio-de-render>`
 - `DATABASE_URL=<url de Postgres de Render>`
-- `SENDGRID_API_KEY=<SG.XXXX...>`
-- `DEFAULT_FROM_EMAIL=<remitente verificado Single Sender>`
-- `MEDIA_ROOT=/var/data/media` (si usas Disk para persistir imágenes)
+- `DEFAULT_FROM_EMAIL=<remitente verificado>`
+- `SENDGRID_API_KEY=<SG.XXXX...>` (opcional si usas SendGrid)
+- `MEDIA_ROOT=/var/data/media` (si usas Disk para imágenes)
 
 Opcionales para crear el superusuario automáticamente:
 
@@ -285,35 +296,37 @@ gunicorn restaurante.wsgi:application
 4. Configura las variables de entorno anteriores.
 5. Guarda y despliega.
 6. Crear superusuario (una vez):
-   - Render → Web Service → “Run Command”: `python manage.py createsuperuser --noinput` (requiere las variables `DJANGO_SUPERUSER_*`).
+   - Render → Web Service → “Run Command”: `python manage.py createsuperuser --noinput` (requiere `DJANGO_SUPERUSER_*`).
 
 ### Consideraciones
 
-- Archivos estáticos: WhiteNoise está habilitado para servir `staticfiles` en producción.
-- Media (imágenes): Se almacenan en disco persistente (`MEDIA_ROOT`), recomendado para Render.
-- Correo: Usa SendGrid API con `.env`/variables de entorno; el remitente debe ser Single Sender verificado.
-- Admin Django: disponible en `/admin/`; superusuarios son redirigidos ahí al iniciar sesión.
+- Archivos estáticos: WhiteNoise sirve `staticfiles` en producción.
+- Media (imágenes): Usar Disk persistente (`MEDIA_ROOT`) para Render.
+- Correo: SendGrid o SMTP con variables de entorno. El remitente debe existir.
+- Admin Django: `/admin/`; superusuarios redirigen automáticamente.
 
 ## Rutas Principales
 
 - `/` - Menú principal
+- `/gestion/` - Redirección a dashboard
 - `/usuarios/login/` - Inicio de sesión
 - `/usuarios/registro/` - Registro de usuarios
 - `/pedidos/carrito/` - Carrito de compras
 - `/pedidos/historial/` - Historial de pedidos
 - `/pedidos/dashboard/` - Panel de administración
+- `/pedidos/reporte/<pdf|excel>/` - Reportes
 - `/reservas/crear/` - Crear reserva
 - `/reservas/mis-reservas/` - Mis reservas
 - `/inventario/` - Control de inventario
-- `/menu/admin/platos/` - Gestión de platos (admin)
-- `/menu/admin/ingredientes/` - Gestión de ingredientes (admin)
+- `/menu/gestion/platos/` - Gestión de platos (admin/mesero)
+- `/menu/gestion/ingredientes/` - Gestión de ingredientes (admin/mesero)
 
 ## Características Técnicas
 
 - **Arquitectura**: MVT (Modelo-Vista-Template)
-- **Autenticación**: Sistema de usuarios personalizado con roles
+- **Autenticación**: Sistema de usuarios personalizado con roles (`AUTH_USER_MODEL`)
 - **Validaciones**: Formularios validados con Django Forms
-- **Seguridad**: CSRF protection, autenticación requerida, control de acceso
+- **Seguridad**: CSRF, autenticación requerida, control de acceso por decoradores
 - **Base de Datos**: Relaciones con ForeignKey, OneToOneField
 - **Gráficos**: Chart.js para visualización de datos
 - **Reportes**: PDF (ReportLab) y Excel (pandas/openpyxl)
@@ -326,6 +339,51 @@ gunicorn restaurante.wsgi:application
 - Sistema de valoraciones y comentarios
 - Programación de entregas
 - Integración con servicios de delivery
+
+## Desarrollo Local
+
+### Variables de entorno (.env)
+
+El proyecto puede cargar variables desde `.env` automáticamente.
+
+Ejemplo de `.env` para desarrollo:
+
+```
+SECRET_KEY=dev-secret
+DEBUG=True
+DEFAULT_FROM_EMAIL=noreply@localhost
+# Configuración SMTP opcional para probar correo
+# EMAIL_HOST=smtp.gmail.com
+# EMAIL_PORT=587
+# EMAIL_USE_TLS=True
+# EMAIL_HOST_USER=tu_email
+# EMAIL_HOST_PASSWORD=tu_contraseña
+```
+
+### Comandos útiles
+
+```
+python manage.py check           # Verifica configuración
+python manage.py makemigrations  # Crea migraciones
+python manage.py migrate         # Aplica migraciones
+python manage.py createsuperuser # Crea superusuario
+python manage.py runserver       # Levanta servidor
+python manage.py test            # Ejecuta pruebas (si existen)
+```
+
+### Flujo de operación
+
+- Carrito: un `Pedido` en estado `pendiente` por cliente; items se agregan desde el menú.
+- Checkout: cambia a `confirmado`, calcula totales con IVA 19% (`pedidos/models.py`).
+- Inventario: por cada item confirmado se genera `MovimientoInventario` de salida y se descuenta `StockInventario` (`inventario/models.py`).
+- Reservas: verifica disponibilidad y evita solapamientos de 2 horas por mesa.
+- Dashboard: agrega métricas y series para gráficos.
+
+### Acceso y permisos
+
+- Decoradores en `menu/decorators.py` controlan acceso:
+  - `staff_or_mesero_required`: administradores y meseros
+  - `admin_role_required`: solo administradores/superusuarios
 
 ## Autor
 
