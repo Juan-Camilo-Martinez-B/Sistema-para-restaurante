@@ -78,6 +78,44 @@
             </div>
         </div>
     </div>
+    <div class="col-md-4">
+        {% if formset %}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Ingredientes del Plato</h5>
+            </div>
+            <div class="card-body">
+                {{ formset.management_form }}
+                {% for f in formset.forms %}
+                    <div class="row align-items-end mb-3">
+                        <div class="col-7">
+                            <label class="form-label">Ingrediente</label>
+                            {{ f.ingrediente }}
+                            {% if f.ingrediente.errors %}
+                                <div class="text-danger">{{ f.ingrediente.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-3">
+                            <label class="form-label">Cantidad</label>
+                            {{ f.cantidad }}
+                            {% if f.cantidad.errors %}
+                                <div class="text-danger">{{ f.cantidad.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-2">
+                            {% if formset.can_delete %}
+                                <label class="form-label">Eliminar</label>
+                                {{ f.DELETE }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if not forloop.last %}<hr>{% endif %}
+                {% endfor %}
+                <small class="text-muted">Guarda el plato para agregar más filas.</small>
+            </div>
+        </div>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}
 

@@ -27,9 +27,3 @@ class PlatoAdmin(admin.ModelAdmin):
     list_filter = ('categoria', 'disponible')
     search_fields = ('nombre', 'descripcion')
     inlines = [PlatoIngredienteInline]
-
-
-@admin.register(PlatoIngrediente)
-class PlatoIngredienteAdmin(admin.ModelAdmin):
-    list_display = ('plato', 'ingrediente', 'cantidad')
-    list_filter = ('plato', 'ingrediente')

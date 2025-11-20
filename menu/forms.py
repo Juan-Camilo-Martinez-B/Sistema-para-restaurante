@@ -1,4 +1,5 @@
 from django import forms
+from django.forms import inlineformset_factory
 from .models import Plato, Categoria, Ingrediente, PlatoIngrediente
 
 
@@ -44,4 +45,26 @@ class IngredienteForm(forms.ModelForm):
             'unidad_medida': forms.TextInput(attrs={'class': 'form-control'}),
             'activo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
+
+
+class PlatoIngredienteForm(forms.ModelForm):
+    class Meta:
+        model = PlatoIngrediente
+        fields = ['ingrediente', 'cantidad']
+        widgets = {
+            'ingrediente': forms.Select(attrs={'class': 'form-select'}),
+            'cantidad': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0.01'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['ingrediente'].queryset = Ingrediente.objects.filter(activo=True).order_by('nombre')
+
+PlatoIngredienteFormSet = inlineformset_factory(
+    Plato,
+    PlatoIngrediente,
+    form=PlatoIngredienteForm,
+    extra=1,
+    can_delete=True,
+)
 

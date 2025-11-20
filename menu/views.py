@@ -6,7 +6,7 @@ from django.db.models import Q
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
 from .models import Plato, Categoria, Ingrediente
-from .forms import PlatoForm, CategoriaForm, IngredienteForm
+from .forms import PlatoForm, CategoriaForm, IngredienteForm, PlatoIngredienteFormSet
 from .decorators import staff_or_mesero_required
 from pedidos.models import ItemPedido, Pedido
 from decimal import Decimal
@@ -105,13 +105,22 @@ def crear_plato(request):
     if request.method == 'POST':
         form = PlatoForm(request.POST, request.FILES)
         if form.is_valid():
-            form.save()
-            messages.success(request, 'Plato creado exitosamente')
-            return redirect('menu:lista_platos_admin')
+            plato = form.save()
+            formset = PlatoIngredienteFormSet(request.POST, instance=plato)
+            if formset.is_valid():
+                formset.save()
+                messages.success(request, 'Plato creado exitosamente')
+                return redirect('menu:lista_platos_admin')
+            else:
+                return render(request, 'menu/admin/form_plato.html', {'form': form, 'formset': formset, 'plato': plato, 'titulo': 'Crear Plato'})
+        else:
+            formset = PlatoIngredienteFormSet()
+            return render(request, 'menu/admin/form_plato.html', {'form': form, 'formset': formset, 'titulo': 'Crear Plato'})
     else:
         form = PlatoForm()
+        formset = PlatoIngredienteFormSet()
     
-    return render(request, 'menu/admin/form_plato.html', {'form': form, 'titulo': 'Crear Plato'})
+    return render(request, 'menu/admin/form_plato.html', {'form': form, 'formset': formset, 'titulo': 'Crear Plato'})
 
 
 @staff_or_mesero_required
@@ -121,14 +130,17 @@ def editar_plato(request, plato_id):
     
     if request.method == 'POST':
         form = PlatoForm(request.POST, request.FILES, instance=plato)
-        if form.is_valid():
+        formset = PlatoIngredienteFormSet(request.POST, instance=plato)
+        if form.is_valid() and formset.is_valid():
             form.save()
+            formset.save()
             messages.success(request, 'Plato actualizado exitosamente')
             return redirect('menu:lista_platos_admin')
     else:
         form = PlatoForm(instance=plato)
+        formset = PlatoIngredienteFormSet(instance=plato)
     
-    return render(request, 'menu/admin/form_plato.html', {'form': form, 'plato': plato, 'titulo': 'Editar Plato'})
+    return render(request, 'menu/admin/form_plato.html', {'form': form, 'formset': formset, 'plato': plato, 'titulo': 'Editar Plato'})
 
 
 @staff_or_mesero_required
