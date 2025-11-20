@@ -1,5 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.utils import timezone
+import uuid
 
 
 class Usuario(AbstractUser):
@@ -39,3 +41,13 @@ class Usuario(AbstractUser):
     
     def es_cliente(self):
         return self.rol == 'cliente'
+
+class RegistroPendiente(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    username = models.CharField(max_length=150)
+    email = models.EmailField()
+    password_hash = models.CharField(max_length=128)
+    rol = models.CharField(max_length=20, choices=Usuario.ROLES, default='cliente')
+    telefono = models.CharField(max_length=15, blank=True, null=True)
+    direccion = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(default=timezone.now)

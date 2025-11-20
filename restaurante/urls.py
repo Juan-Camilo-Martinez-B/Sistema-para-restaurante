@@ -28,6 +28,7 @@ urlpatterns = [
     path('pedidos/', include('pedidos.urls')),
     path('reservas/', include('reservas.urls')),
     path('inventario/', include('inventario.urls')),
+    
 ]
 
 if settings.DEBUG:

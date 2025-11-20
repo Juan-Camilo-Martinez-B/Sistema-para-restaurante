@@ -39,6 +39,7 @@ db.sqlite3-journal
 /media
 /staticfiles
 /static
+*.db
 *.pot
 *.pyc
 
@@ -51,6 +52,8 @@ db.sqlite3-journal
 .env.local
 .env.*.local
 .venv
+.python-version
+render.yaml
 
 # IDEs
 .vscode/

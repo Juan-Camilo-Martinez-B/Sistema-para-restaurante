@@ -232,23 +232,67 @@ EMAIL_HOST_USER = 'tu_email@gmail.com'
 EMAIL_HOST_PASSWORD = 'tu_contraseña'
 ```
 
-## Despliegue
+## Despliegue en Render
 
-### Opciones de Despliegue
+### Requisitos
 
-1. **Render** (recomendado)
-2. **Railway**
-3. **PythonAnywhere**
-4. **Heroku**
+- Cuenta en Render.com
+- Base de datos PostgreSQL creada en Render
+- Variables de entorno preparadas
 
-### Configuraciones para Producción
+### Variables de entorno
 
-1. Cambiar `DEBUG = False` en `settings.py`
-2. Configurar `ALLOWED_HOSTS`
-3. Configurar base de datos PostgreSQL
-4. Configurar variables de entorno para SECRET_KEY
-5. Configurar servidor de archivos estáticos
-6. Configurar correo SMTP
+Define estas variables en Render → Environment:
+
+- `SECRET_KEY`
+- `DEBUG=False`
+- `ALLOWED_HOSTS=<tu-dominio-de-render>`
+- `CSRF_TRUSTED_ORIGINS=https://<tu-dominio-de-render>`
+- `DATABASE_URL=<url de Postgres de Render>`
+- `SENDGRID_API_KEY=<SG.XXXX...>`
+- `DEFAULT_FROM_EMAIL=<remitente verificado Single Sender>`
+- `MEDIA_ROOT=/var/data/media` (si usas Disk para persistir imágenes)
+
+Opcionales para crear el superusuario automáticamente:
+
+- `DJANGO_SUPERUSER_USERNAME`
+- `DJANGO_SUPERUSER_EMAIL`
+- `DJANGO_SUPERUSER_PASSWORD`
+
+### Comandos de Build y Start
+
+- Build Command:
+
+```bash
+pip install -r requirements.txt
+python manage.py collectstatic --noinput
+python manage.py migrate --noinput
+```
+
+- Start Command:
+
+```bash
+gunicorn restaurante.wsgi:application
+```
+
+### Pasos en Render
+
+1. Crea la base de datos PostgreSQL y copia `DATABASE_URL` (Internal o External).
+2. Crea un Web Service apuntando al repositorio.
+3. En “Disks”, añade un Disk para persistir media:
+   - Mount Path: `/var/data`
+   - Define `MEDIA_ROOT=/var/data/media`
+4. Configura las variables de entorno anteriores.
+5. Guarda y despliega.
+6. Crear superusuario (una vez):
+   - Render → Web Service → “Run Command”: `python manage.py createsuperuser --noinput` (requiere las variables `DJANGO_SUPERUSER_*`).
+
+### Consideraciones
+
+- Archivos estáticos: WhiteNoise está habilitado para servir `staticfiles` en producción.
+- Media (imágenes): Se almacenan en disco persistente (`MEDIA_ROOT`), recomendado para Render.
+- Correo: Usa SendGrid API con `.env`/variables de entorno; el remitente debe ser Single Sender verificado.
+- Admin Django: disponible en `/admin/`; superusuarios son redirigidos ahí al iniciar sesión.
 
 ## Rutas Principales
 

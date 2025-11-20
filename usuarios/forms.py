@@ -99,7 +99,28 @@ class RegistroForm(UserCreationForm):
         user.rol = self.cleaned_data.get('rol', 'cliente')
         user.telefono = self.cleaned_data.get('telefono', '')
         user.direccion = self.cleaned_data.get('direccion', '')
+        user.is_active = False
         if commit:
             user.save()
         return user
 
+class PasswordResetRequestForm(forms.Form):
+    email = forms.EmailField(widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Correo electrónico'}))
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if not Usuario.objects.filter(email=email).exists():
+            raise forms.ValidationError('No existe una cuenta con ese correo')
+        return email
+
+class SetNewPasswordForm(forms.Form):
+    password1 = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Nueva contraseña'}))
+    password2 = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Confirmar contraseña'}))
+
+    def clean(self):
+        cleaned = super().clean()
+        p1 = cleaned.get('password1')
+        p2 = cleaned.get('password2')
+        if p1 and p2 and p1 != p2:
+            raise forms.ValidationError('Las contraseñas no coinciden')
+        return cleaned

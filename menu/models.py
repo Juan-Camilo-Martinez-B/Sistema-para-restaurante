@@ -61,6 +61,8 @@ class Plato(models.Model):
         return f"{self.nombre} - ${self.precio}"
 
 
+
+
 class PlatoIngrediente(models.Model):
     """Relación entre platos e ingredientes con cantidad"""
     plato = models.ForeignKey(Plato, on_delete=models.CASCADE, related_name='ingredientes_plato')
