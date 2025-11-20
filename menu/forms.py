@@ -64,7 +64,7 @@ PlatoIngredienteFormSet = inlineformset_factory(
     Plato,
     PlatoIngrediente,
     form=PlatoIngredienteForm,
-    extra=1,
+    extra=0,
     can_delete=True,
 )
 

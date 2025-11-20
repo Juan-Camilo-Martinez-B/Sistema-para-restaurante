@@ -81,6 +81,7 @@
                     <div id="ingredientes-container">
                         {% for f in formset.forms %}
                             <div class="row align-items-end mb-3">
+                                {% for hidden in f.hidden_fields %}{{ hidden }}{% endfor %}
                                 <div class="col-md-7">
                                     <label class="form-label">Ingrediente</label>
                                     {% if f.non_field_errors %}
@@ -113,6 +114,7 @@
                     </div>
                     <div id="empty-form" class="d-none">
                         <div class="row align-items-end mb-3">
+                            {% for hidden in formset.empty_form.hidden_fields %}{{ hidden }}{% endfor %}
                             <div class="col-md-7">
                                 <label class="form-label">Ingrediente</label>
                                 {{ formset.empty_form.ingrediente }}
@@ -148,32 +150,40 @@
 </div>
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded',function(){
-  var addBtn=document.getElementById('add-ingrediente');
-  if(!addBtn) return;
-  addBtn.addEventListener('click',function(){
-    var totalInput=document.querySelector('input[name$="-TOTAL_FORMS"]');
-    var total=parseInt(totalInput.value,10);
-    var container=document.getElementById('ingredientes-container');
-    var template=document.getElementById('empty-form');
-    var html=template.innerHTML.replace(/__prefix__/g,total);
-    var wrapper=document.createElement('div');
-    wrapper.innerHTML=html;
-    container.appendChild(wrapper);
-    totalInput.value=total+1;
-  });
-  document.addEventListener('click',function(e){
-    if(e.target && e.target.classList.contains('quitar-fila')){
-      var row=e.target.closest('.row');
-      if(!row) return;
-      var del=row.querySelector('input[type="checkbox"][name$="-DELETE"]');
-      if(del){
-        del.checked=true;
+if(!window.__platoFormInit){
+  window.__platoFormInit=true;
+  document.addEventListener('DOMContentLoaded',function(){
+    var addBtn=document.getElementById('add-ingrediente');
+    if(!addBtn) return;
+    if(addBtn.dataset.bound==='1') return;
+    addBtn.dataset.bound='1';
+    addBtn.addEventListener('click',function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      addBtn.disabled=true;
+      var totalInput=document.querySelector('input[name$="-TOTAL_FORMS"]');
+      var total=parseInt(totalInput.value,10);
+      var container=document.getElementById('ingredientes-container');
+      var template=document.getElementById('empty-form');
+      var html=template.innerHTML.replace(/__prefix__/g,total);
+      var wrapper=document.createElement('div');
+      wrapper.innerHTML=html;
+      container.appendChild(wrapper);
+      totalInput.value=total+1;
+      addBtn.disabled=false;
+    });
+    document.addEventListener('click',function(e){
+      if(e.target && e.target.classList.contains('quitar-fila')){
+        e.preventDefault();
+        var row=e.target.closest('.row');
+        if(!row) return;
+        var del=row.querySelector('input[type="checkbox"][name$="-DELETE"]');
+        if(del){ del.checked=true; }
+        row.style.display='none';
       }
-      row.style.display='none';
-    }
+    });
   });
-});
+}
 </script>
 {% endblock %}
 {% endblock %}

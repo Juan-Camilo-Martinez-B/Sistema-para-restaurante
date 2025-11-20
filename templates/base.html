@@ -62,7 +62,7 @@
     
     {% block extra_css %}{% endblock %}
 </head>
-<body>
+<body class="d-flex flex-column min-vh-100">
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
             <a class="navbar-brand" href="{% url 'menu:index' %}">
@@ -194,7 +194,7 @@
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="bg-dark text-light text-center py-3 mt-5">
+    <footer class="bg-dark text-light text-center py-3 mt-auto">
         <div class="container">
             <p class="mb-0">&copy; 2025 Sistema de Gestión de Restaurante. Todos los derechos reservados.</p>
         </div>
